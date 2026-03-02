@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorry... 💕</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#060d2e; font-family:'Nunito',sans-serif; overflow:hidden; height:100vh; width:100vw; }
+
+  /* ── HIDDEN YouTube Player ── */
+  #yt-container { position:fixed; bottom:-9999px; left:-9999px; width:1px; height:1px; z-index:-1; }
+
+  /* ═══════════════════════════════
+     SPLASH / ENTER SCREEN
+  ═══════════════════════════════ */
+  #splash {
+    position:fixed; inset:0; z-index:999;
+    background: radial-gradient(ellipse at 50% 60%, #1a0535 0%, #060d2e 70%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:20px; transition: opacity 0.8s ease;
+  }
+  #splash.hide { opacity:0; pointer-events:none; }
+
+  .splash-hearts { font-size:52px; animation:heartbeat 1.5s ease-in-out infinite; }
+  @keyframes heartbeat { 0%,100%{transform:scale(1);} 50%{transform:scale(1.18);} }
+
+  .splash-title {
+    font-family:'Dancing Script',cursive;
+    font-size:72px; color:white;
+    text-shadow: 0 0 40px rgba(255,120,190,1), 0 0 80px rgba(255,80,160,0.5);
+    text-align:center; line-height:1;
+  }
+  .splash-sub {
+    color:rgba(255,255,255,0.65); font-size:18px; text-align:center; line-height:1.7;
+  }
+  .splash-sub span { color:#ff89c4; font-weight:700; }
+
+  .enter-btn {
+    margin-top:10px;
+    background: linear-gradient(135deg, #ff6eb0, #c44af0);
+    color:white; border:none; border-radius:50px;
+    padding:18px 52px; font-family:'Nunito',sans-serif;
+    font-size:20px; font-weight:800; cursor:pointer;
+    box-shadow: 0 0 40px rgba(255,100,180,0.6), 0 0 80px rgba(180,60,220,0.3);
+    animation: pulse-btn 2s ease-in-out infinite;
+    letter-spacing:1px;
+  }
+  @keyframes pulse-btn {
+    0%,100%{box-shadow:0 0 40px rgba(255,100,180,0.6),0 0 80px rgba(180,60,220,0.3);}
+    50%{box-shadow:0 0 60px rgba(255,100,180,0.9),0 0 100px rgba(180,60,220,0.5);}
+  }
+  .enter-btn:hover { transform:scale(1.06); }
+  .enter-btn:active { transform:scale(0.97); }
+
+  .splash-note { color:rgba(255,255,255,0.35); font-size:13px; margin-top:5px; }
+
+  /* floating particles on splash */
+  .splash-particle {
+    position:absolute; pointer-events:none;
+    animation: float-up linear infinite;
+    opacity:0;
+  }
+  @keyframes float-up {
+    0%{transform:translateY(0) rotate(0deg);opacity:0;}
+    10%{opacity:0.8;}
+    90%{opacity:0.5;}
+    100%{transform:translateY(-100vh) rotate(360deg);opacity:0;}
+  }
+
+  /* ═══════════════════════════════
+     MUSIC BAR
+  ═══════════════════════════════ */
+  #music-bar {
+    position:fixed; top:0; left:0; width:100%;
+    background:rgba(10,15,50,0.85); backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,137,196,0.3);
+    display:flex; align-items:center; gap:12px;
+    padding:9px 18px; z-index:20;
+  }
+  .note-anim { display:inline-block; animation:note-bounce 1.3s ease-in-out infinite; font-size:20px; }
+  @keyframes note-bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+
+  .song-label { color:rgba(255,255,255,0.6); font-size:14px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .song-label strong { color:#ff89c4; }
+
+  .mbar-btn {
+    background:none; border:none; color:#ff89c4; cursor:pointer;
+    font-size:21px; transition:transform 0.15s; padding:2px 4px;
+  }
+  .mbar-btn:hover { transform:scale(1.2); }
+
+  .vol-wrap { display:flex; align-items:center; gap:6px; }
+  .vol-wrap span { color:rgba(255,255,255,0.4); font-size:15px; }
+  .vol-slider { width:70px; accent-color:#ff89c4; cursor:pointer; }
+
+  .change-song-btn {
+    background:linear-gradient(135deg,#ff6eb0,#c44af0);
+    color:white; border:none; border-radius:18px;
+    padding:6px 14px; font-size:13px; font-weight:700;
+    cursor:pointer; font-family:'Nunito',sans-serif; white-space:nowrap;
+    transition:transform 0.2s;
+  }
+  .change-song-btn:hover { transform:scale(1.05); }
+  #songFileInput { display:none; }
+
+  /* ═══════════════════════════════
+     SLIDES
+  ═══════════════════════════════ */
+  #particles { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  .bg-glow {
+    position:fixed; bottom:-100px; left:50%; transform:translateX(-50%);
+    width:600px; height:350px;
+    background:radial-gradient(ellipse,rgba(255,100,200,0.35) 0%,rgba(100,50,255,0.15) 50%,transparent 70%);
+    z-index:0; animation:glow-p 3s ease-in-out infinite;
+  }
+  .bg-glow2 {
+    position:fixed; top:-100px; left:25%; width:450px; height:250px;
+    background:radial-gradient(ellipse,rgba(80,120,255,0.2) 0%,transparent 70%);
+    z-index:0; animation:glow-p 4s ease-in-out infinite reverse;
+  }
+  @keyframes glow-p { 0%,100%{opacity:0.7;} 50%{opacity:1;} }
+
+  .slide {
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    z-index:1; opacity:0; pointer-events:none;
+    transition:opacity 0.6s ease; padding-top:62px;
+  }
+  .slide.active { opacity:1; pointer-events:all; }
+
+  .card {
+    background:linear-gradient(145deg,#0f2060,#0a1540);
+    border:2px dashed #ff89c4; border-radius:28px;
+    box-shadow:0 0 50px rgba(255,100,180,0.2);
+    padding:34px 36px; width:90%; max-width:580px;
+    animation:fadeUp 0.7s ease both;
+  }
+
+  .big-title { font-family:'Dancing Script',cursive; font-size:66px; color:white; margin-bottom:10px; text-shadow:0 0 25px rgba(255,150,200,0.9); line-height:1.1; }
+  .emoji-row { font-size:38px; margin-bottom:14px; }
+  .para-pink { color:#ff6eb0; font-size:19px; font-weight:700; line-height:1.8; margin-bottom:10px; }
+  .para-white { color:rgba(255,255,255,0.88); font-size:18px; line-height:1.9; margin-bottom:22px; }
+  .sub-label { color:#ff6eb0; font-size:17px; font-weight:700; margin-bottom:18px; }
+
+  .flex-row { display:flex; align-items:center; gap:28px; padding:0 20px; }
+  .cat-box {
+    width:185px; height:185px; border-radius:22px;
+    background:white; display:flex; align-items:center; justify-content:center;
+    font-size:108px; border:3px solid #ff89c4;
+    box-shadow:0 0 32px rgba(255,100,180,0.5); flex-shrink:0;
+  }
+  .slide-text { flex:1; }
+
+  .pink-btn {
+    background:linear-gradient(135deg,#ff6eb0,#ff89c4);
+    color:white; border:none; padding:15px 34px; border-radius:50px;
+    font-family:'Nunito',sans-serif; font-size:18px; font-weight:800;
+    cursor:pointer; box-shadow:0 4px 22px rgba(255,100,180,0.55);
+    transition:transform 0.2s,box-shadow 0.2s; letter-spacing:0.5px;
+  }
+  .pink-btn:hover { transform:scale(1.06); box-shadow:0 6px 30px rgba(255,100,180,0.75); }
+  .pink-btn:active { transform:scale(0.97); }
+
+  .sorry-card { max-height:78vh; overflow-y:auto; }
+  .sorry-card::-webkit-scrollbar { width:4px; }
+  .sorry-card::-webkit-scrollbar-thumb { background:#ff89c4; border-radius:4px; }
+  .meri-jaan { color:#ff6eb0; font-size:18px; font-weight:700; margin-bottom:16px; }
+  .sorry-para { color:rgba(255,255,255,0.9); font-size:18px; line-height:1.9; margin-bottom:14px; }
+
+  /* Photos */
+  .photos-wrap { display:flex; flex-direction:column; align-items:center; gap:18px; animation:fadeUp 0.7s ease both; }
+  .photos-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .photo-card { width:138px; height:138px; border-radius:18px; border:2px solid #ff89c4; overflow:hidden; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:52px; background:linear-gradient(135deg,#1a2a6c,#0d1a4a); transition:transform 0.2s; }
+  .photo-card:hover { transform:scale(1.06); }
+  .photo-card img { width:100%; height:100%; object-fit:cover; }
+  .add-slot { border:2px dashed #ff89c4!important; background:rgba(255,137,196,0.06)!important; color:#ff89c4; font-size:15px; font-weight:800; flex-direction:column; gap:4px; }
+  .add-slot .plus { font-size:36px; }
+  #photoInput { display:none; }
+
+  /* Music slide player */
+  .player-box { background:rgba(255,137,196,0.08); border:1px solid rgba(255,137,196,0.3); border-radius:18px; padding:22px; }
+  .player-song-name { color:white; font-size:17px; font-weight:700; text-align:center; margin-bottom:14px; min-height:24px; }
+  .player-controls { display:flex; align-items:center; justify-content:center; gap:22px; margin-bottom:16px; }
+  .ctrl { background:none; border:none; color:#ff89c4; cursor:pointer; font-size:24px; transition:transform 0.15s; }
+  .ctrl:hover { transform:scale(1.2); }
+  .play-big { width:56px; height:56px; background:linear-gradient(135deg,#ff6eb0,#ff89c4); border:none; border-radius:50%; color:white; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 18px rgba(255,100,180,0.55); transition:transform 0.2s; }
+  .play-big:hover { transform:scale(1.12); }
+  .prog-bar { width:100%; height:6px; background:rgba(255,137,196,0.25); border-radius:3px; margin-bottom:10px; cursor:pointer; position:relative; }
+  .prog-fill { height:100%; background:#ff89c4; border-radius:3px; width:0%; transition:width 0.5s linear; }
+  .time-row { display:flex; justify-content:space-between; color:rgba(255,255,255,0.45); font-size:14px; }
+
+  /* Nav */
+  .nav-dots { position:fixed; right:18px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; gap:10px; z-index:10; }
+  .dot { width:12px; height:12px; border-radius:50%; background:rgba(255,137,196,0.35); cursor:pointer; border:1px solid rgba(255,137,196,0.6); transition:all 0.2s; }
+  .dot.active { background:#ff89c4; transform:scale(1.35); box-shadow:0 0 9px #ff89c4; }
+  .nav-arrows { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); display:flex; gap:14px; z-index:10; }
+  .arrow-btn { background:rgba(255,137,196,0.18); border:1px solid rgba(255,137,196,0.5); color:#ff89c4; width:46px; height:46px; border-radius:50%; cursor:pointer; font-size:22px; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px); transition:all 0.2s; }
+  .arrow-btn:hover { background:rgba(255,137,196,0.4); transform:scale(1.1); }
+  .slide-label { position:fixed; top:72px; right:62px; color:rgba(255,137,196,0.5); font-size:13px; z-index:10; letter-spacing:2px; }
+  .love-script { font-family:'Dancing Script',cursive; font-size:28px; color:#ff6eb0; margin-bottom:18px; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(28px);} to{opacity:1;transform:translateY(0);} }
+</style>
+</head>
+<body>
+
+<!-- Hidden YouTube IFrame -->
+<div id="yt-container">
+  <div id="yt-player"></div>
+</div>
+
+<!-- Splash Screen -->
+<div id="splash">
+  <div class="splash-hearts">💕</div>
+  <div class="splash-title">Ek Khaas Baat<br>Kehni Hai... 🥺</div>
+  <p class="splash-sub">
+    <span>Tumhare Liye</span> ek chhoti si feeling hai<br>
+    Jo ham share karna chahte hain...
+  </p>
+  <button class="enter-btn" onclick="enterSite()">💌 Andar Aao Cutie</button>
+  <p class="splash-note">🎵 Song automatically bajega</p>
+</div>
+
+<!-- MUSIC BAR -->
+<div id="music-bar">
+  <span class="note-anim">🎵</span>
+  <div class="song-label" id="barSongName"><strong>Tera Yaar Hoon Main...</strong> 🎶</div>
+  <button class="mbar-btn" id="barPlayBtn" onclick="toggleMusic()" title="Play/Pause">▶</button>
+  <div class="vol-wrap">
+    <span>🔊</span>
+    <input type="range" class="vol-slider" id="volSlider" min="0" max="100" value="70" oninput="setVol(this.value)" title="Volume">
+  </div>
+  <button class="change-song-btn" onclick="document.getElementById('songFileInput').click()">🔄 Song Badlo</button>
+  <input type="file" id="songFileInput" accept="audio/*" onchange="changeSong(this)">
+</div>
+
+<canvas id="particles"></canvas>
+<div class="bg-glow"></div><div class="bg-glow2"></div>
+<div class="slide-label" id="slideLabel">1 / 7</div>
+
+<!-- SLIDES -->
+<div class="slide active" id="slide-1">
+  <div class="flex-row" style="animation:fadeUp 0.7s ease both;">
+    <div class="cat-box">🐱</div>
+    <div class="slide-text">
+      <div class="big-title">Oyee Rasmalai...</div>
+      <div class="emoji-row">😻 💛</div>
+      <p class="para-pink">Hame pata hai ap naraz ho... 😞</p>
+      <p class="para-white">Aur yeh bhi pata hai ham galti kiye hai.<br>Please meri baat sun lo...<br>Bas ek baar. Please. 🙏</p>
+      <button class="pink-btn" onclick="goTo(2)">Theek Hai, Bolo 💬</button>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="slide-2">
+  <div class="flex-row" style="animation:fadeUp 0.7s ease both;">
+    <div class="cat-box">🙀</div>
+    <div class="slide-text">
+      <div class="big-title">Suno Malkin...</div>
+      <div class="emoji-row">😕 💔</div>
+      <p class="para-pink">Hame pata hai ap gussa ho...</p>
+      <p class="para-white">Hamne tumhe hurt kiya, uska koi excuse nahi.<br>Tumhari feelings matter karti hain mujhe.<br>Bohot zyada. 💗</p>
+      <button class="pink-btn" onclick="goTo(3)">Aur Bhi Sunna Hai 👂</button>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="slide-3">
+  <div class="card" style="display:flex;align-items:center;gap:24px;">
+    <div class="cat-box" style="width:158px;height:158px;font-size:90px;flex-shrink:0;">😿</div>
+    <div>
+      <div class="big-title" style="font-size:56px;">Please na...</div>
+      <div class="emoji-row" style="font-size:30px;">😔 💛</div>
+      <p class="para-white">Maaf kr do n cutie..<br>Ham sach mein sorry bolna chahte hain.<br>Please? 🥺</p>
+      <button class="pink-btn" onclick="goTo(4)">Okay, Bolo 💕</button>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="slide-4">
+  <div class="card sorry-card">
+    <div class="big-title" style="font-size:56px;">Dil Se Sorry... 💗</div>
+    <div class="meri-jaan">Meri Rani,</div>
+    <p class="sorry-para">Ek to itna din baad baat hua ham dono ka aur usme bhi apko hurt kiye ham😔</p>
+    <p class="sorry-para">ap mere liye kitne special ho, words mein nahi bata sakta.<br>Apke karan mera face without skin care hi glow krta hai </p>
+    <p class="sorry-para">Apki wo pyari si hasi ko bhaut miss krte hai ham pura din ✨🥰🤗<br>Meri to aachi dost ho n ji , mere se bhi guusa?😔</p>
+    <p class="sorry-para">Rani mera bhi to ek chota dil hai n usko bura lgta hai n<br>I'm really sorry. 💔</p>
+    <p class="sorry-para">Please maaf kr do n ♥️</p>
+    <button class="pink-btn" style="margin-top:8px;" onclick="goTo(5)">Aur Bhi Kuch Hai... 📸</button>
+  </div>
+</div>
+
+<div class="slide" id="slide-5">
+  <div class="photos-wrap">
+    <div class="big-title" style="font-size:52px;text-align:center;">Hamaari Yaadein 📸💕</div>
+    <div class="photos-grid" id="photosGrid">
+      <div class="photo-card add-slot" onclick="document.getElementById('photoInput').click()" style="display:flex;">
+        <div class="plus">+</div>
+        <small style="font-size:14px;font-weight:800;">Add Photo</small>
+      </div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" multiple onchange="addPhotos(this)">
+    <button class="pink-btn" onclick="goTo(6)">Ek Aur Cheez 🎵</button>
+  </div>
+</div>
+
+<div class="slide" id="slide-6">
+  <div class="card" style="max-width:440px;">
+    <div class="big-title" style="font-size:50px;text-align:center;">🎵 Hamaara Song</div>
+    <div class="sub-label" style="text-align:center;">Jo background mein baj raha hai 💕</div>
+    <div class="player-box">
+      <div class="player-song-name" id="playerSongName">🎵 Meri Rasmalai...</div>
+      <div class="player-controls">
+        <button class="ctrl" onclick="ytSeek(-10)">⏮</button>
+        <button class="play-big" id="slidePlayBtn" onclick="toggleMusic()">▶</button>
+        <button class="ctrl" onclick="ytSeek(10)">⏭</button>
+      </div>
+      <div class="prog-bar" id="progBar" onclick="seekTo(event)">
+        <div class="prog-fill" id="progFill"></div>
+      </div>
+      <div class="time-row"><span id="curTime">0:00</span><span id="durTime">--:--</span></div>
+    </div>
+    <button class="pink-btn" style="margin-top:18px;width:100%;" onclick="document.getElementById('songFileInput').click()">🔄 Song Badlo</button>
+    <button class="pink-btn" style="margin-top:10px;width:100%;background:linear-gradient(135deg,#6b21a8,#9333ea);" onclick="goTo(7)">Last Cheez... 💌</button>
+  </div>
+</div>
+
+<div class="slide" id="slide-7">
+  <div class="flex-row" style="animation:fadeUp 0.7s ease both;">
+    <div class="cat-box" style="font-size:98px;">🐼</div>
+    <div class="slide-text">
+      <div class="big-title">Thanku! 👑</div>
+      <div class="emoji-row">😍 💛</div>
+      <p class="para-white">ap duniya ki sabse achi dost ho!</p>
+      <div class="love-script">Sorry for Bahu wala baat(apko hi bahu banana hai ) ❤️</div>
+      <button class="pink-btn" onclick="celebrate()">Tumhare Liye Kuch Special 🎉</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav-dots" id="navDots"></div>
+<div class="nav-arrows">
+  <button class="arrow-btn" onclick="goTo(currentSlide-1)">←</button>
+  <button class="arrow-btn" onclick="goTo(currentSlide+1)">→</button>
+</div>
+
+<!-- Fallback audio for uploaded songs -->
+<audio id="uploadedAudio" loop></audio>
+
+<!-- YouTube IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+// ═══════════════════════════════
+// YOUTUBE PLAYER
+// ═══════════════════════════════
+const YT_VIDEO_ID = 'ugJ9s8IWgGE';
+let ytPlayer = null;
+let ytReady = false;
+let isPlaying = false;
+let useUploadedAudio = false;
+const uploadedAudio = document.getElementById('uploadedAudio');
+
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('yt-player', {
+    height:'1', width:'1',
+    videoId: YT_VIDEO_ID,
+    playerVars: { autoplay:0, loop:1, playlist:YT_VIDEO_ID, controls:0, disablekb:1 },
+    events: {
+      onReady: () => { ytReady = true; },
+      onStateChange: (e) => {
+        if(e.data === YT.PlayerState.PLAYING) { isPlaying=true; updateBtns(); startProgress(); }
+        if(e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) { isPlaying=false; updateBtns(); }
+      }
+    }
+  });
+}
+
+function enterSite() {
+  // Play music on user click (required by browsers)
+  if(ytReady && !useUploadedAudio) {
+    ytPlayer.setVolume(parseInt(document.getElementById('volSlider').value));
+    ytPlayer.playVideo();
+  }
+  // Hide splash
+  const splash = document.getElementById('splash');
+  splash.classList.add('hide');
+  setTimeout(() => { splash.style.display='none'; }, 800);
+}
+
+function toggleMusic() {
+  if(useUploadedAudio) {
+    if(uploadedAudio.paused) { uploadedAudio.play(); isPlaying=true; }
+    else { uploadedAudio.pause(); isPlaying=false; }
+    updateBtns();
+    return;
+  }
+  if(!ytReady) return;
+  const state = ytPlayer.getPlayerState();
+  if(state === YT.PlayerState.PLAYING) { ytPlayer.pauseVideo(); }
+  else { ytPlayer.playVideo(); }
+}
+
+function setVol(v) {
+  if(useUploadedAudio) { uploadedAudio.volume = v/100; }
+  else if(ytReady) { ytPlayer.setVolume(parseInt(v)); }
+}
+
+function ytSeek(sec) {
+  if(useUploadedAudio) { uploadedAudio.currentTime = Math.max(0,uploadedAudio.currentTime+sec); return; }
+  if(!ytReady) return;
+  const cur = ytPlayer.getCurrentTime();
+  ytPlayer.seekTo(cur+sec, true);
+}
+
+function seekTo(e) {
+  const ratio = e.offsetX / e.currentTarget.offsetWidth;
+  if(useUploadedAudio && uploadedAudio.duration) {
+    uploadedAudio.currentTime = ratio * uploadedAudio.duration;
+    return;
+  }
+  if(!ytReady || !ytPlayer.getDuration) return;
+  ytPlayer.seekTo(ratio * ytPlayer.getDuration(), true);
+}
+
+function updateBtns() {
+  const icon = isPlaying ? '⏸' : '▶';
+  document.getElementById('barPlayBtn').textContent = icon;
+  document.getElementById('slidePlayBtn').textContent = icon;
+}
+
+// Progress bar update
+let progInterval;
+function startProgress() {
+  clearInterval(progInterval);
+  progInterval = setInterval(() => {
+    if(useUploadedAudio) return;
+    if(!ytReady || !ytPlayer.getCurrentTime) return;
+    try {
+      const cur = ytPlayer.getCurrentTime();
+      const dur = ytPlayer.getDuration();
+      if(dur>0) {
+        document.getElementById('progFill').style.width = (cur/dur*100)+'%';
+        document.getElementById('curTime').textContent = fmt(cur);
+        document.getElementById('durTime').textContent = fmt(dur);
+      }
+    } catch(e){}
+  }, 800);
+}
+
+// Uploaded audio fallback
+function changeSong(input) {
+  const file = input.files[0];
+  if(!file) return;
+  useUploadedAudio = true;
+  // Pause YT
+  if(ytReady) { try { ytPlayer.stopVideo(); } catch(e){} }
+  const url = URL.createObjectURL(file);
+  uploadedAudio.src = url;
+  uploadedAudio.volume = document.getElementById('volSlider').value/100;
+  uploadedAudio.play();
+  isPlaying = true;
+  const name = file.name.replace(/\.[^.]+$/,'');
+  document.getElementById('barSongName').innerHTML = '<strong>'+name+'</strong> 🎶';
+  document.getElementById('playerSongName').textContent = '🎵 '+name;
+  updateBtns();
+
+  uploadedAudio.addEventListener('timeupdate', () => {
+    if(!uploadedAudio.duration) return;
+    const pct = uploadedAudio.currentTime/uploadedAudio.duration*100;
+    document.getElementById('progFill').style.width = pct+'%';
+    document.getElementById('curTime').textContent = fmt(uploadedAudio.currentTime);
+    document.getElementById('durTime').textContent = fmt(uploadedAudio.duration);
+  });
+  uploadedAudio.addEventListener('ended', () => { isPlaying=false; updateBtns(); });
+  input.value='';
+}
+
+function fmt(s) {
+  if(!s||isNaN(s)) return '0:00';
+  return Math.floor(s/60)+':'+(Math.floor(s%60)<10?'0':'')+Math.floor(s%60);
+}
+
+// ═══════════════════════════════
+// SLIDES
+// ═══════════════════════════════
+let currentSlide=1; const totalSlides=7;
+const dotsC = document.getElementById('navDots');
+for(let i=1;i<=totalSlides;i++){
+  const d=document.createElement('div');
+  d.className='dot'+(i===1?' active':'');
+  d.onclick=()=>goTo(i);
+  dotsC.appendChild(d);
+}
+function goTo(n) {
+  if(n<1||n>totalSlides) return;
+  document.getElementById('slide-'+currentSlide).classList.remove('active');
+  document.querySelectorAll('.dot')[currentSlide-1].classList.remove('active');
+  currentSlide=n;
+  document.getElementById('slide-'+currentSlide).classList.add('active');
+  document.querySelectorAll('.dot')[currentSlide-1].classList.add('active');
+  document.getElementById('slideLabel').textContent=currentSlide+' / '+totalSlides;
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') goTo(currentSlide+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') goTo(currentSlide-1);
+});
+let tx=0;
+document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{ const d=tx-e.changedTouches[0].clientX; if(Math.abs(d)>50)goTo(currentSlide+(d>0?1:-1)); });
+
+// ═══════════════════════════════
+// ADD PHOTOS
+// ═══════════════════════════════
+const grid=document.getElementById('photosGrid');
+const addSlot=grid.querySelector('.add-slot');
+function addPhotos(input) {
+  Array.from(input.files).forEach(file=>{
+    const url=URL.createObjectURL(file);
+    const card=document.createElement('div');
+    card.className='photo-card';
+    const img=document.createElement('img');
+    img.src=url; card.appendChild(img);
+    grid.insertBefore(card,addSlot);
+  });
+  input.value='';
+}
+
+// ═══════════════════════════════
+// CELEBRATE
+// ═══════════════════════════════
+function celebrate() {
+  for(let i=0;i<90;i++) setTimeout(confetti,i*22);
+}
+function confetti() {
+  const el=document.createElement('div');
+  const emojis=['💕','💗','💖','✨','🌸','💝','💓','⭐','🎉','🥰','💘'];
+  el.style.cssText=`position:fixed;left:${Math.random()*100}vw;top:-20px;font-size:${18+Math.random()*20}px;z-index:300;pointer-events:none;animation:cf ${2+Math.random()*2}s linear forwards;`;
+  el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),4500);
+}
+
+// ═══════════════════════════════
+// PARTICLES
+// ═══════════════════════════════
+const canvas=document.getElementById('particles');
+const ctx=canvas.getContext('2d');
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+resize(); window.addEventListener('resize',resize);
+const pts=[];
+for(let i=0;i<50;i++) pts.push({
+  x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+  size:5+Math.random()*9,shape:['heart','triangle','circle'][Math.floor(Math.random()*3)],
+  sx:(Math.random()-0.5)*0.45,sy:-0.3-Math.random()*0.5,
+  op:0.3+Math.random()*0.5,col:Math.random()>0.5?'#ff89c4':'#a78bfa'
+});
+function dHeart(c,x,y,s){
+  c.beginPath();c.moveTo(x,y+s/4);
+  c.bezierCurveTo(x,y,x-s/2,y,x-s/2,y+s/4);
+  c.bezierCurveTo(x-s/2,y+s/2,x,y+s*.75,x,y+s);
+  c.bezierCurveTo(x,y+s*.75,x+s/2,y+s/2,x+s/2,y+s/4);
+  c.bezierCurveTo(x+s/2,y,x,y,x,y+s/4);c.closePath();
+}
+function anim(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  pts.forEach(p=>{
+    p.x+=p.sx;p.y+=p.sy;
+    if(p.y<-20){p.y=canvas.height+20;p.x=Math.random()*canvas.width;}
+    if(p.x<-20)p.x=canvas.width+20; if(p.x>canvas.width+20)p.x=-20;
+    ctx.save();ctx.globalAlpha=p.op;ctx.fillStyle=p.col;
+    if(p.shape==='heart'){ctx.translate(p.x,p.y);ctx.scale(.5,.5);dHeart(ctx,0,-p.size/2,p.size);ctx.fill();}
+    else if(p.shape==='triangle'){ctx.beginPath();ctx.moveTo(p.x,p.y-p.size);ctx.lineTo(p.x-p.size*.8,p.y+p.size*.6);ctx.lineTo(p.x+p.size*.8,p.y+p.size*.6);ctx.closePath();ctx.fill();}
+    else{ctx.beginPath();ctx.arc(p.x,p.y,p.size/2,0,Math.PI*2);ctx.fill();}
+    ctx.restore();
+  });
+  requestAnimationFrame(anim);
+}
+anim();
+
+// ═══════════════════════════════
+// SPLASH PARTICLES
+// ═══════════════════════════════
+const splash=document.getElementById('splash');
+const splashEmojis=['💕','✨','🌸','💗','⭐'];
+for(let i=0;i<18;i++){
+  const el=document.createElement('div');
+  el.className='splash-particle';
+  el.textContent=splashEmojis[Math.floor(Math.random()*splashEmojis.length)];
+  el.style.cssText=`left:${Math.random()*100}%;bottom:${Math.random()*30}%;font-size:${14+Math.random()*18}px;animation-duration:${4+Math.random()*5}s;animation-delay:${Math.random()*4}s;`;
+  splash.appendChild(el);
+}
+
+// ═══════════════════════════════
+// CLICK SPARKLES
+// ═══════════════════════════════
+document.addEventListener('click',e=>{
+  if(e.target.closest('button')||e.target.closest('input')) return;
+  ['💕','✨','🌸'].forEach(em=>{
+    const el=document.createElement('div');
+    el.style.cssText=`position:fixed;left:${e.clientX}px;top:${e.clientY}px;font-size:22px;pointer-events:none;z-index:60;animation:spk .65s ease forwards;`;
+    el.textContent=em; document.body.appendChild(el);
+    setTimeout(()=>el.remove(),700);
+  });
+});
+
+// ── All Animations ──
+const styleEl=document.createElement('style');
+styleEl.textContent=`
+  @keyframes cf{to{transform:translateY(115vh) rotate(360deg);opacity:0;}}
+  @keyframes spk{0%{transform:scale(0);opacity:1;}100%{transform:scale(1.8) translateY(-22px);opacity:0;}}
+`;
+document.head.appendChild(styleEl);
+</script>
+</body>
+</html>
